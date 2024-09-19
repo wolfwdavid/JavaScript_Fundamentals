@@ -77,3 +77,8 @@ const CourseInfo = {
       }
     }
   ];
+
+  //*(∩｀-´)⊃━☆ﾟ.*･｡ﾟ*//
+
+  //*Assignment group belongs to the course?*//
+
