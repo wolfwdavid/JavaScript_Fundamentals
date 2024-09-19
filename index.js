@@ -85,3 +85,20 @@ const CourseInfo = {
     return CourseInfo.id === AssignmentGroup.course_id;
   }
   
+// Check if a learner's submission is valid.
+function isValidSubmission(submission, assignment) {
+  const score = submission.submission.score;
+  const pointsPossible = assignment.points_possible;
+
+  if (pointsPossible === 0 || typeof score !== "number" || isNaN(score)) {
+    return false;
+  } else { 
+    return true;
+  }
+}
+
+// Calculate the weighted average of a learner's scores.
+function calculateWeightedAverage(learnerData) {
+  return (learnerData.totalScore / learnerData.totalWeight) * 100;
+}
+
