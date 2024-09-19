@@ -81,24 +81,88 @@ const CourseInfo = {
   //*(∩｀-´)⊃━☆ﾟ.*･｡ﾟ*//
 
   //*Assignment group belongs to the course?*//
-  function isValidCourseAssignmentGroup(CourseInfo, AssignmentGroup) {
-    return CourseInfo.id === AssignmentGroup.course_id;
+ 
+function processLearnerData(CourseInfo, AssignmentGroup, LearnerSubmissions) {
+  if (!isValidCourseAssignmentGroup(CourseInfo, AssignmentGroup)) {
+    throw new Error("Invalid input: AssignmentGroup does not belong to the course.");
   }
+
+  const assignments = AssignmentGroup.assignments;
+  const learnerData = {};
+
+  for (const submission of LearnerSubmissions) {
+    const learnerID = submission.learner_id;
+    const assignmentID = submission.assignment_id;
+    const assignment = assignments.find((a) => a.id === assignmentID);
+
+    // Skip if the assignment is not found or it is not yet due
+    if (!assignment || new Date() < new Date(assignment.due_at)) {
+      continue;
+    }
+
+    // Initialize learner data if it doesn't exist
+    if (!learnerData[learnerID]) {
+      learnerData[learnerID] = {
+        id: learnerID,
+        totalScore: 0,
+        totalWeight: 0,
+        assignments: {} // track individual assignment scores
+      };
+    }
+
+    // Check if submission is valid
+    if (isValidSubmission(submission, assignment)) {
+      let score = submission.submission.score;
+      const pointsPossible = assignment.points_possible;
+
+      // Apply 10% penalty for late submissions
+      if (new Date(submission.submission.submitted_at) > new Date(assignment.due_at)) {
+        score -= pointsPossible * 0.10;
+      }
+
+      // Update learner's total score and weight
+      learnerData[learnerID].totalScore += score;
+      learnerData[learnerID].totalWeight += pointsPossible;
+
+      // Track the percentage score for the assignment
+      learnerData[learnerID].assignments[assignmentID] = (score / pointsPossible) * 100;
+    }
+  }
+
+  return learnerData;
+}
+
+// Improved getLearnerData to handle and format learner data properly
+function getLearnerData(CourseInfo, AssignmentGroup, LearnerSubmissions) {
+  try {
+    const learnerData = processLearnerData(CourseInfo, AssignmentGroup, LearnerSubmissions);
   
-// Check if a learner's submission is valid.
-function isValidSubmission(submission, assignment) {
-  const score = submission.submission.score;
-  const pointsPossible = assignment.points_possible;
+    const results = [];
+  
+    for (const learnerID in learnerData) {
+      const learner = learnerData[learnerID];
+      const weightedAverage = calculateWeightedAverage(learner);
 
-  if (pointsPossible === 0 || typeof score !== "number" || isNaN(score)) {
-    return false;
-  } else { 
-    return true;
+      const learnerResult = {
+        id: learner.id,
+        avg: weightedAverage,
+      };
+
+      // Include each assignment score in the learner's result
+      for (const assignmentID in learner.assignments) {
+        learnerResult[assignmentID] = learner.assignments[assignmentID];
+      }
+
+      results.push(learnerResult);
+    }
+
+    return results;
+
+  } catch (error) {
+    console.error(error.message);
   }
 }
 
-// Calculate the weighted average of a learner's scores.
-function calculateWeightedAverage(learnerData) {
-  return (learnerData.totalScore / learnerData.totalWeight) * 100;
-}
-
+// Get learner data and handle potential errors.
+const result = getLearnerData(CourseInfo, AssignmentGroup, LearnerSubmissions);
+console.log(result);
