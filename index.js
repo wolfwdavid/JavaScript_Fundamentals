@@ -81,4 +81,7 @@ const CourseInfo = {
   //*(∩｀-´)⊃━☆ﾟ.*･｡ﾟ*//
 
   //*Assignment group belongs to the course?*//
-
+  function isValidCourseAssignmentGroup(CourseInfo, AssignmentGroup) {
+    return CourseInfo.id === AssignmentGroup.course_id;
+  }
+  
